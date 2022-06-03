@@ -6,9 +6,9 @@ Learn how to connect Airflow, Presto, and Cassandra all on your browser via Gitp
 
 [![Open in Gitpod](https://github.com/Anant/example-cassandra-presto-airflow)
 
-### 1. Run setup script to Start Presto and Cassandra Docker Containers and install Airflow
+### 1. Start Presto and Cassandra Docker Containers and install Airflow
 **IMPORTANT: Remember to make the ports public when the dialog shows in the bottom righthand corner!**
-#### 1.1
+#### 1.1 Run setup script
 ```bash
 bash setup.sh
 ```
@@ -29,9 +29,9 @@ password: password
 
 
 ### 3. Setup Presto Connection in Airflow Admin
-#### 3.1 Get IP (copy the 2nd one printed)
+#### 3.1 Get IP Address
 ```bash
-hostname -I
+hostname -I | awk '{print $2}'
 ```
 
 #### 3.2 Fill in presto_default connection with the following items and then confirm by testing the connection
@@ -42,3 +42,49 @@ Schema: remove hive and leave blank
 Login: admin
 Port: 8080
 ```
+
+### 4. Create Cassandra Catalog in Presto
+#### 4.1 Update {hostname} in cassandra.properties file with value from 3.1
+```bash
+sed -i "s/{hostname}/$(hostname -I | awk '{print $2}')/" cassandra.properties
+```
+
+#### 4.2 Copy cassandra.properties to Presto container
+```bash
+docker cp cassandra.properties $(docker container ls | grep 'presto' | awk '{print $1}'):/opt/presto-server/etc/catalog/cassandra.properties
+```
+
+#### 4.3 Confirm cassandra.properties was moved to Presto container
+```bash
+docker exec -it presto sh -c "ls /opt/presto-server/etc/catalog"
+```
+
+### 5. Confirm Presto CLI can see Cassandra catalog
+#### 5.1 Start Presto CLI
+```bash
+docker exec -it presto presto-cli
+```
+
+#### 5.2 Run show command
+```bash
+show catalogs ;
+```
+If you do not see cassandra, then we need to restart the container
+
+#### 5.3 Restart Presto container
+```bash
+docker restart presto
+```
+
+#### 5.3 Repeat 5.1 and 5.2 and confirm if you can now see the cassandra catalog
+
+### 6. Run Airflow Presto Dag
+#### 6.1 Move DAG into Dags Folder
+```bash
+mkdir ~/airflow/dags && mv presto.py ~/airflow/dags
+```
+
+#### 6.2 Confirm scheduler has picked up Presto Dag in Airflow UI (might take a couple minutes)
+#### 6.3 Enable and run Presto dag
+#### 6.4 Review Logs and confirm query returned same thing as we saw with `show catalogs`
+
