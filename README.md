@@ -83,8 +83,16 @@ docker restart presto
 ```bash
 mkdir ~/airflow/dags && mv presto.py ~/airflow/dags
 ```
-
-#### 6.2 Confirm scheduler has picked up Presto Dag in Airflow UI (might take a couple minutes)
-#### 6.3 Enable and run Presto dag
-#### 6.4 Review Logs and confirm query returned same thing as we saw with `show catalogs`
-
+#### 6.2 While waiting on scheduler to pick up Dag, create Presto query variable
+##### 6.2.1 Under Airflow Admin in the UI, click variables
+##### 6.2.2 Click the blue plus sign to create a variable
+##### 6.2.3 Fill in the key and values as below:
+```bash
+key: presto_query
+value: show catalogs;
+```
+#### 6.3 Confirm scheduler has picked up Presto Dag in Airflow UI (might take a couple minutes)
+#### 6.4 Enable and run Presto dag
+#### 6.5 Review Logs and confirm query returned same thing as we saw with `show catalogs`
+#### 6.6 Update the Presto query variable value to `show schemas in cassandra;`
+#### 6.7 Rerun dag and confirm that the returned values match the default keyspaces that exist in Cassandra
