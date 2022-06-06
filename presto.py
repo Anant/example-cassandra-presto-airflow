@@ -3,7 +3,7 @@ from datetime import timedelta
 import airflow
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
-
+from airflow.models import Variable
 from airflow.hooks.presto_hook import PrestoHook
 
 default_args = {
@@ -29,10 +29,10 @@ def talk_to_presto():
     ph = PrestoHook()
 
     # Query PrestoDB
-    query = "show catalogs"
+    presto_query = Variable.get("presto_query")
 
     # Fetch Data
-    data = ph.get_records(query)
+    data = ph.get_records(presto_query)
     logging.info(data)
     return data
 
