@@ -4,7 +4,7 @@ Learn how to connect Airflow, Presto, and Cassandra all on your browser via Gitp
 
 ## Click below to get started!
 
-[Open in Gitpod](https://github.com/Anant/example-cassandra-presto-airflow)
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/Anant/example-cassandra-presto-airflow)
 
 ### 1. Start Presto and Cassandra Docker Containers and install Airflow
 **IMPORTANT: Remember to make the ports public when the dialog shows in the bottom righthand corner!**
