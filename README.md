@@ -76,23 +76,44 @@ If you do not see cassandra, then we need to restart the container
 docker restart presto
 ```
 
-#### 5.3 Repeat 5.1 and 5.2 and confirm if you can now see the cassandra catalog
+#### 5.4 Repeat 5.1 and 5.2 and confirm if you can now see the cassandra catalog
 
-### 6. Run Airflow Presto Dag
-#### 6.1 Move DAG into Dags Folder
+### 6. Set up Cassandra data
+#### 6.1 Copy CQL file onto Cassandra Container
 ```bash
-mkdir ~/airflow/dags && mv presto.py ~/airflow/dags
+docker cp setup.cql $(docker container ls | grep 'cassandra' | awk '{print $1}'):/
 ```
-#### 6.2 While waiting on scheduler to pick up Dag, create Presto query variable
-##### 6.2.1 Under Airflow Admin in the UI, click variables
-##### 6.2.2 Click the blue plus sign to create a variable
-##### 6.2.3 Fill in the key and values as below:
+#### 6.2 Run CQL file
+```bash
+docker exec -it cassandra cqlsh -f setup.cql
+```
+
+### 7. Run DAGs
+#### 7.1 Move DAGs into Dags Folder
+```bash
+mkdir ~/airflow/dags && mv presto_read_from_cassandra.py ~/airflow/dags && mv presto_join_and_xcom.py ~/airflow/dags && mv presto_write_to_cassandra.py ~/airflow/dags
+```
+#### 7.2 While waiting on scheduler to pick up Dags, create Presto query variable
+##### 7.2.1 Under Airflow Admin in the UI, click variables
+##### 7.2.2 Click the blue plus sign to create a variable
+##### 7.2.3 Fill in the key and values as below:
 ```bash
 key: presto_query
-value: show catalogs;
+value: select * from cassandra.demo.spacecraft_journey_catalog;
 ```
-#### 6.3 Confirm scheduler has picked up Presto Dag in Airflow UI (might take a couple minutes)
-#### 6.4 Enable and run Presto dag
-#### 6.5 Review Logs and confirm query returned same thing as we saw with `show catalogs`
-#### 6.6 Update the Presto query variable value to `show schemas in cassandra;`
-#### 6.7 Rerun dag and confirm that the returned values match the default keyspaces that exist in Cassandra
+#### 7.3 Confirm scheduler has picked up the DAGs in Airflow UI (might take a couple minutes)
+#### 7.4 Enable and Run Read From Cassandra Dag
+##### 7.4.1 Click on the logs to visualize the result of the Presto query
+#### 7.5 Update the presto_query value to the below in Airflow variables
+```bash
+select cassandra.demo.spacecraft_journey_catalog.spacecraft_name, cassandra.demo.spacecraft_journey_catalog.summary, cassandra.demo.spacecraft_speed_over_time.speed from cassandra.demo.spacecraft_journey_catalog inner join cassandra.demo.spacecraft_speed_over_time on cassandra.demo.spacecraft_journey_catalog.journey_id = cassandra.demo.spacecraft_speed_over_time.journey_id;
+```
+#### 7.6 Enable and run Join and XCOM Dag
+##### 7.6.1 Click on the logs to visualize the result of the Presto query and see how they change from the first task to the second task
+#### 7.7 Enable and run Write to Cassandra Dag
+##### 7.7.1 Once completed, check out the logs on the write_to_cassandra task
+##### 7.7.2 Confirm writes went through to Cassandra
+```bash
+docker exec -it cassandra cqlsh -e "select * from demo.spacecraft_journey_summary_and_speed"
+```
+
