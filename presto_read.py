@@ -18,9 +18,9 @@ default_args = {
     }
 
 dag = DAG(
-    'presto_dag',
+    'presto_read_dag',
     default_args=default_args,
-    description='A simple tutorial DAG with PrestoDB and Spark',
+    description='A simple tutorial DAG with PrestoDB and Cassandra',
     # Continue to run DAG once per hour
     schedule_interval='@daily',
 )
