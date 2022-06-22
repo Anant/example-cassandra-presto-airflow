@@ -1044,8 +1044,7 @@ INSERT INTO spacecraft_speed_over_time (spacecraft_name, journey_id, speed, spee
 
 CREATE TABLE IF NOT EXISTS spacecraft_journey_summary_and_speed (
   	spacecraft_name text,
-  	journey_id timeuuid,
-    speed double,
   	summary text,
-  	PRIMARY KEY ((spacecraft_name), journey_id)
-) WITH CLUSTERING ORDER BY (journey_id desc);
+	speed double,
+  	PRIMARY KEY ((spacecraft_name), summary, speed)
+);

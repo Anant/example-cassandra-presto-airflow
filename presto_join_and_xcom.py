@@ -18,14 +18,14 @@ default_args = {
     }
 
 dag = DAG(
-    'presto_read_dag',
+    'presto_join_and_xcom_dag',
     default_args=default_args,
     description='A simple tutorial DAG with PrestoDB and Cassandra',
     # Continue to run DAG once per hour
     schedule_interval='@daily',
 )
 
-def talk_to_presto():
+def read_from_cassandra():
     ph = PrestoHook()
 
     # Query PrestoDB
@@ -33,14 +33,25 @@ def talk_to_presto():
 
     # Fetch Data
     data = ph.get_records(presto_query)
-    logging.info(data)
     return data
 
-presto_task = PythonOperator(
-    task_id='talk_to_presto',
+read_from_cassandra = PythonOperator(
+    task_id='read_from_cassandra',
     provide_context=True,
-    python_callable=talk_to_presto,
+    python_callable=read_from_cassandra,
     dag=dag,
 )
 
-presto_task
+def get_xcoms(task_instance):
+    xcoms = task_instance.xcom_pull(task_ids='read_from_cassandra')
+    for xcom in xcoms:
+        print(xcom)
+
+xcom_task = PythonOperator(
+    task_id='xcom_get',
+    provide_context=True,
+    python_callable=get_xcoms,
+    dag=dag,
+)
+
+read_from_cassandra >> xcom_task
